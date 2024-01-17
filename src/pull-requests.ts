@@ -5,6 +5,7 @@ const PASSWORD = process.env.BITBUCKET_PASSWORD;
 
 const repoSlug = "smart-reviewer-testing";
 const workspace = "promovize";
+import commentText from "./markdown_content.json";
 
 const URL_PREFIX = process.env.BITBUCKET_API_URL || "https://api.bitbucket.org/2.0";
 
@@ -83,7 +84,7 @@ export const getPullRequestStatuses = async (pullRequestId: number) => {
 
 export const requestChanges = async (pullRequestId: number) => {
   const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/request-changes`;
-  console.log({ url });
+
   const { data } = await axios.post(
     url,
     {},
@@ -125,7 +126,7 @@ export const addComment = async (pullRequestId: number, comment: string) => {
 
   const body = {
     content: {
-      raw: comment,
+      raw: commentText.text,
     },
   };
 
