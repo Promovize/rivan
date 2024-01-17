@@ -66,8 +66,70 @@ export const getPullRequests = async () => {
 
 export const getPullRequestStatuses = async (pullRequestId: number) => {
   const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/statuses`;
-
   const { data } = await axios.get(url, {
+    auth: {
+      username: USER_NAME!,
+      password: PASSWORD!,
+    },
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  const { values } = data;
+
+  return values;
+};
+
+export const requestChanges = async (pullRequestId: number) => {
+  const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/request-changes`;
+  console.log({ url });
+  const { data } = await axios.post(
+    url,
+    {},
+    {
+      auth: {
+        username: USER_NAME!,
+        password: PASSWORD!,
+      },
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  return data;
+};
+
+export const approve = async (pullRequestId: number) => {
+  const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/approve`;
+  const { data } = await axios.post(
+    url,
+    {},
+    {
+      auth: {
+        username: USER_NAME!,
+        password: PASSWORD!,
+      },
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  return data;
+};
+
+export const addComment = async (pullRequestId: number, comment: string) => {
+  const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments`;
+
+  const body = {
+    content: {
+      raw: comment,
+    },
+  };
+
+  const { data } = await axios.post(url, body, {
     auth: {
       username: USER_NAME!,
       password: PASSWORD!,
