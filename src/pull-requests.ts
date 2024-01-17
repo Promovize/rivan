@@ -142,3 +142,19 @@ export const addComment = async (pullRequestId: number, comment: string) => {
 
   return data;
 };
+
+export const loadPullRequestDiff = async (pullRequestId: number) => {
+  const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/diff`;
+
+  const { data } = await axios.get(url, {
+    auth: {
+      username: USER_NAME!,
+      password: PASSWORD!,
+    },
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  return data;
+};

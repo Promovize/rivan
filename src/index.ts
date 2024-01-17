@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
-import { addComment, getPullRequests, requestChanges } from "./pull-requests";
+import { addComment, getPullRequests, loadPullRequestDiff, requestChanges } from "./pull-requests";
 import bodyParser from "body-parser";
 
 const app = express();
@@ -51,6 +51,16 @@ app.post("/pull-requests/:id/comments", async (req, res) => {
     const { id } = req.params;
     const comment = req.body;
     const pullRequest = await addComment(parseInt(id), comment?.text);
+    res.send(pullRequest);
+  } catch (error: any) {
+    res.status(500).send(error.message);
+  }
+});
+
+app.get("/pull-requests/:id/diff", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pullRequest = await loadPullRequestDiff(parseInt(id));
     res.send(pullRequest);
   } catch (error: any) {
     res.status(500).send(error.message);
