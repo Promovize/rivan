@@ -126,7 +126,11 @@ export const addComment = async (pullRequestId: number, comment: string) => {
 
   const body = {
     content: {
-      raw: commentText.text,
+      raw: "Ensure the MongoDB server is properly secured if using localhost.",
+    },
+    inline: {
+      from: 6,
+      path: "index.js",
     },
   };
 
