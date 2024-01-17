@@ -1,18 +1,71 @@
 import axios from "axios";
-import base64 from "base-64";
 
 const USER_NAME = process.env.BITBUCKET_USER;
 const PASSWORD = process.env.BITBUCKET_PASSWORD;
 
-const projectKey = "promovize";
 const repoSlug = "smart-reviewer-testing";
+const workspace = "promovize";
 
-// const URL_PREFIX = process.env.BITBUCKET_API_URL || "https://api.bitbucket.org/2.0";
-const URL_PREFIX = "https://api.bitbucket.org/2.0";
+const URL_PREFIX = process.env.BITBUCKET_API_URL || "https://api.bitbucket.org/2.0";
 
 export const getPullRequests = async () => {
-  //   const url = `${URL_PREFIX}/projects/${projectKey}/repos/${repoSlug}/pull-requests`;
-  const url = `${URL_PREFIX}/user`;
+  const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests`;
+  const { data } = await axios.get(url, {
+    auth: {
+      username: USER_NAME!,
+      password: PASSWORD!,
+    },
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  const { values } = data;
+
+  return values;
+};
+
+// "links": {
+//     "self": {
+//         "href": "https://api.bitbucket.org/2.0/repositories/promovize/smart-reviewer-testing/pullrequests/1"
+//     },
+//     "html": {
+//         "href": "https://bitbucket.org/promovize/smart-reviewer-testing/pull-requests/1"
+//     },
+//     "commits": {
+//         "href": "https://api.bitbucket.org/2.0/repositories/promovize/smart-reviewer-testing/pullrequests/1/commits"
+//     },
+//     "approve": {
+//         "href": "https://api.bitbucket.org/2.0/repositories/promovize/smart-reviewer-testing/pullrequests/1/approve"
+//     },
+//     "request-changes": {
+//         "href": "https://api.bitbucket.org/2.0/repositories/promovize/smart-reviewer-testing/pullrequests/1/request-changes"
+//     },
+//     "diff": {
+//         "href": "https://api.bitbucket.org/2.0/repositories/promovize/smart-reviewer-testing/diff/promovize/smart-reviewer-testing:880f6cfd06f8%0D2cb6bf83ceb7?from_pullrequest_id=1&topic=true"
+//     },
+//     "diffstat": {
+//         "href": "https://api.bitbucket.org/2.0/repositories/promovize/smart-reviewer-testing/diffstat/promovize/smart-reviewer-testing:880f6cfd06f8%0D2cb6bf83ceb7?from_pullrequest_id=1&topic=true"
+//     },
+//     "comments": {
+//         "href": "https://api.bitbucket.org/2.0/repositories/promovize/smart-reviewer-testing/pullrequests/1/comments"
+//     },
+//     "activity": {
+//         "href": "https://api.bitbucket.org/2.0/repositories/promovize/smart-reviewer-testing/pullrequests/1/activity"
+//     },
+//     "merge": {
+//         "href": "https://api.bitbucket.org/2.0/repositories/promovize/smart-reviewer-testing/pullrequests/1/merge"
+//     },
+//     "decline": {
+//         "href": "https://api.bitbucket.org/2.0/repositories/promovize/smart-reviewer-testing/pullrequests/1/decline"
+//     },
+//     "statuses": {
+//         "href": "https://api.bitbucket.org/2.0/repositories/promovize/smart-reviewer-testing/pullrequests/1/statuses"
+//     }
+// },
+
+export const getPullRequestStatuses = async (pullRequestId: number) => {
+  const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/statuses`;
 
   const { data } = await axios.get(url, {
     auth: {
