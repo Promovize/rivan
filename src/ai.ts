@@ -1,10 +1,11 @@
 import OpenAI from "openai";
 import { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources";
+import { getConfluencePageContent } from "./confluence";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
+const contentId = process.env.CONFLUENCE_REVIEW_GUIDELINES_PAGE_ID;
 type ReviewData = {
   review_diff: string;
   author_username: string;
@@ -110,25 +111,17 @@ const getReviewTools = (reviewData: ReviewData) => {
 
 export const getReviewFromOpenAI = async (reviewData: ReviewData) => {
   const { review_diff, author_username, pull_request_title } = reviewData;
+  const guidlines = await getConfluencePageContent(parseInt(contentId as string));
 
   const messages: ChatCompletionMessageParam[] = [
     {
       role: "system",
       content: `
-        You are assigned to conduct a comprehensive and engaging code review for a frontend pull request in a React JS project. The changes are provided in a diff that formatted in the form I'll provide later. Your review should be friendly and constructive, using emojis to keep the tone positive. Key areas to focus on include:
+        Your name is KayCode, You are assigned to conduct a comprehensive and engaging code review for a frontend pull request in a React JS project. The changes are provided in a diff that formatted in the form I'll provide later. Your review should be friendly and constructive, using emojis to keep the tone positive. Key areas to focus on include:
 
-        - Adhering to React JS best practices and TypeScript types.
-        - Using SWR for initial data fetching in components/hooks.
-        - Structuring API calls as per project guidelines, preferably from src/_api/endpoints.
-        - Managing props effectively, using context or Redux for numerous props.
-        - Encouraging the use of hooks for better code reuse and maintainability.
-        - Avoiding the any type and ensuring descriptive naming for better clarity.
-        - Following DRY principles, avoiding long and unfocused functions.
-        - Keeping functions concise, focused, and maintaining code readability.
-        - Avoiding inline styling and ensuring consistent code formatting.
-        - Checking for efficient resource use, optimization, and proper error handling
-
-        
+        Review Guidelines in HTML format, read carefully:
+        ${guidlines}
+      
         The received diff was formated like this to allow you to find easily the line of code you want to comment on.
         'File: header.js\n' +
         '1. + import React from "react";\n' +
@@ -150,6 +143,8 @@ export const getReviewFromOpenAI = async (reviewData: ReviewData) => {
 
         The number before the line indicates the exact line number of the code you want to comment on.
         Before every first number, The is the file path.
+
+        It's highly recommanded that you provide some code examples to illustrate your points when they might be complex. You can also include links to external resources that may be helpful.
         `,
     },
     {
