@@ -7,49 +7,29 @@ const PASSWORD = process.env.BITBUCKET_PASSWORD;
 
 const repoSlug = "smart-reviewer-testing";
 const workspace = "promovize";
-const BITBUCKET_WEBHOOK_SECRET = process.env.BITBUCKET_WEBHOOK_SECRET;
 
 const URL_PREFIX = process.env.BITBUCKET_API_URL || "https://api.bitbucket.org/2.0";
 
-const getPullRequestStatuses = async (pullRequestId: number) => {
-  const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/statuses`;
-  const { data } = await axios.get(url, {
-    auth: {
-      username: USER_NAME!,
-      password: PASSWORD!,
-    },
-    headers: {
-      Accept: "application/json",
-    },
-  });
+// const getPullRequestStatuses = async (pullRequestId: number) => {
+//   const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/statuses`;
+//   const { data } = await axios.get(url, {
+//     auth: {
+//       username: USER_NAME!,
+//       password: PASSWORD!,
+//     },
+//     headers: {
+//       Accept: "application/json",
+//     },
+//   });
 
-  const { values } = data;
+//   const { values } = data;
 
-  return values;
-};
+//   return values;
+// };
 
 const requestChanges = async (pullRequestId: number) => {
   const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/request-changes`;
 
-  const { data } = await axios.post(
-    url,
-    {},
-    {
-      auth: {
-        username: USER_NAME!,
-        password: PASSWORD!,
-      },
-      headers: {
-        Accept: "application/json",
-      },
-    },
-  );
-
-  return data;
-};
-
-const approve = async (pullRequestId: number) => {
-  const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/approve`;
   const { data } = await axios.post(
     url,
     {},
@@ -72,7 +52,7 @@ type Comment = {
     raw: string;
   };
   inline?: {
-    from: number;
+    to: number;
     path: string;
   };
 };
@@ -80,7 +60,12 @@ type Comment = {
 const addComment = async (pullRequestId: number, comment: Comment) => {
   const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments`;
 
-  const body = comment;
+  const body = {
+    content: {
+      raw: comment.content.raw,
+    },
+    inline: comment.inline,
+  };
 
   const { data } = await axios.post(url, body, {
     auth: {
@@ -93,6 +78,34 @@ const addComment = async (pullRequestId: number, comment: Comment) => {
   });
 
   return data;
+};
+
+export const fakeAddComment = async (pullRequestId: number, comment: Comment) => {
+  const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments`;
+  try {
+    const body = {
+      content: {
+        raw: comment.content.raw,
+      },
+      inline: comment.inline,
+    };
+
+    console.log({ body, url });
+    const { data } = await axios.post(url, body, {
+      auth: {
+        username: USER_NAME!,
+        password: PASSWORD!,
+      },
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    return data;
+  } catch (error: any) {
+    console.log({ error: error.response?.data, fields: error.response?.data?.error?.fields });
+    throw error;
+  }
 };
 
 const loadPullRequestDiff = async (pullRequestId: number) => {
@@ -167,21 +180,6 @@ const getDefaultReviewers = async () => {
   return data?.values;
 };
 
-interface Change {
-  type: "AddedLine" | "DeletedLine" | "UnchangedLine";
-  lineBefore?: number;
-  lineAfter?: number;
-  content: string;
-}
-
-interface Chunk {
-  changes: Change[];
-}
-
-interface FileDiff {
-  chunks: Chunk[];
-}
-
 export const listenForPullRequestEvents = async (signature: string, pullrequest: PullRequestEventData) => {
   try {
     const { id, author, title } = pullrequest || {};
@@ -207,6 +205,11 @@ export const listenForPullRequestEvents = async (signature: string, pullrequest:
     const firstCall = tool_calls?.[0];
     const { function: functionData } = firstCall || {};
     await sendComments(id, functionData);
+
+    const parsed = JSON.parse(functionData?.arguments || "{}");
+    if (parsed.finalDecision === "REQUEST_CHANGES") {
+      await requestChanges(id);
+    }
   } catch (error: any) {
     console.log({ error: error.response?.data });
     throw error;
@@ -237,7 +240,7 @@ const sendComments = async (pullRequestId: number, functionData: any) => {
   try {
     const { arguments: argumentsData } = functionData;
     const parsedArgumentsData = JSON.parse(argumentsData || "{}");
-    const { comments = [], reviewSummary, finalDecision } = parsedArgumentsData;
+    const { comments = [], reviewSummary } = parsedArgumentsData;
 
     for (const comment of comments) {
       await addComment(pullRequestId, comment);

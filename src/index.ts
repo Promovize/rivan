@@ -2,10 +2,8 @@ import dotenv from "dotenv";
 dotenv.config();
 import cors from "cors";
 import express from "express";
-import { listenForPullRequestEvents } from "./pull-requests";
+import { fakeAddComment, listenForPullRequestEvents } from "./pull-requests";
 import bodyParser from "body-parser";
-import NodeCache from "node-cache";
-const prCache = new NodeCache();
 
 const app = express();
 
@@ -24,8 +22,18 @@ app.post("/pull-request-handler", async (req, res) => {
   const pullrequest = req.body?.pullrequest;
 
   res.send("OK");
-  console.log("calling");
+  const date = new Date().toLocaleString("en-US", {
+    timeZone: "America/New_York",
+  });
+  console.log("Received pull request event", signature, date);
   await listenForPullRequestEvents(signature, pullrequest);
+  console.log("Finished processing pull request event", signature, date);
+});
+
+app.post("/add-comment", async (req, res) => {
+  const { pullRequestId, comment } = req.body;
+  const addedComment = await fakeAddComment(pullRequestId, comment);
+  res.send(addedComment);
 });
 
 app.listen(port, () => {

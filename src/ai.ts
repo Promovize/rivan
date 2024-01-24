@@ -31,13 +31,13 @@ const getReviewTools = (reviewData: ReviewData) => {
               description: `
                 This is an array of review comments you want to make on the pull request.
                 Comments should be tied to a specific line of code and the file following the diff format provided. The diff has everything,
-                pay attention to the \`from\` and \`path\` properties.
+                pay attention to the \`to\` and \`path\` properties.
                 A single comment should have the following format: 
                 content: {
                     raw: "This is a comment on a specific line of code.", // markdown
                   },
                   inline: {
-                    from: 6, // This is specified in the formated diff.
+                    to: 6, // This is specified in the formated diff.
                     path: "index.js", // This is specified in the formated diff
                 },
                 You can mention the author when necessary by adding @username in the comment. the username is ${author_username}
@@ -60,7 +60,7 @@ const getReviewTools = (reviewData: ReviewData) => {
                   inline: {
                     type: "object",
                     properties: {
-                      from: {
+                      to: {
                         type: "number",
                         description: `This is the line number of the code you want to comment on.`,
                       },
@@ -69,7 +69,7 @@ const getReviewTools = (reviewData: ReviewData) => {
                         description: `This is the path of the file you want to comment on.`,
                       },
                     },
-                    required: ["from", "path"],
+                    required: ["to", "path"],
                   },
                 },
               },
