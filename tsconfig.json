@@ -8,8 +8,13 @@
     "strict": true,
     "skipLibCheck": true,
     "baseUrl": "./",
+    "outDir": "./dist", // Output directory for compiled files
+    "rootDir": "./src", // Root directory of TypeScript files
     "paths": {
       "@/*": ["src/*"]
     }
-  }
+  },
+  "include": [
+    "src/**/*.ts" // Include all TypeScript files in src directory
+  ]
 }
