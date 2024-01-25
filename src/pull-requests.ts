@@ -90,7 +90,6 @@ export const fakeAddComment = async (pullRequestId: number, comment: Comment) =>
       inline: comment.inline,
     };
 
-    console.log({ body, url });
     const { data } = await axios.post(url, body, {
       auth: {
         username: USER_NAME!,
@@ -183,19 +182,15 @@ const getDefaultReviewers = async () => {
 export const listenForPullRequestEvents = async (signature: string, pullrequest: PullRequestEventData) => {
   try {
     const { id, author, title } = pullrequest || {};
-    console.log({ signature, pullrequest });
     await addUserDefaultReviewer();
     const { nickname } = author || {};
     const pullRequestDiff = await loadPullRequestDiff(id);
-    console.log({ pullRequestDiff });
     const authorInfo = await getPullRequestAuthorInfo(author.uuid);
-    console.log({ authorInfo });
     const parsedDiff = parseGitDiff(pullRequestDiff, {
       noPrefix: false,
     });
     const { files } = parsedDiff;
     const formattedDiff = formatDiffForDisplay(files);
-    console.log({ formattedDiff });
     const review = await getReviewFromOpenAI({
       author_username: nickname,
       pull_request_title: title,
@@ -207,7 +202,6 @@ export const listenForPullRequestEvents = async (signature: string, pullrequest:
     const { tool_calls } = message || {};
 
     const firstCall = tool_calls?.[0];
-    console.log({ firstCall });
     const { function: functionData } = firstCall || {};
     await sendComments(id, functionData);
 
