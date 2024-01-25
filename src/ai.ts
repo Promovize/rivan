@@ -112,7 +112,7 @@ const getReviewTools = (reviewData: ReviewData) => {
 export const getReviewFromOpenAI = async (reviewData: ReviewData) => {
   const { review_diff, author_username, pull_request_title } = reviewData;
   const guidlines = await getConfluencePageContent(parseInt(contentId as string));
-
+  console.log({ guidlines });
   const messages: ChatCompletionMessageParam[] = [
     {
       role: "system",
