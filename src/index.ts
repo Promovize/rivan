@@ -5,7 +5,7 @@ import express from "express";
 import { fakeAddComment, listenForPullRequestEvents } from "./pull-requests";
 import bodyParser from "body-parser";
 import { getConfluencePageContent } from "./confluence";
-
+import moment from "moment";
 const app = express();
 
 app.use(bodyParser.json());
@@ -29,17 +29,9 @@ app.post("/pull-request-handler", async (req, res) => {
   const pullrequest = req.body?.pullrequest;
 
   res.send("OK");
-  const now = new Date();
-  const formatedTime = now.toLocaleString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
 
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const formatedTime = moment().format("MMMM Do YYYY, h:mm:ss a");
+  const timezone = moment().format("Z");
 
   console.dir(
     {
