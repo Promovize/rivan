@@ -116,6 +116,7 @@ const getReviewTools = (reviewData) => {
 const getReviewFromOpenAI = (reviewData) => __awaiter(void 0, void 0, void 0, function* () {
     const { review_diff, author_username, pull_request_title } = reviewData;
     const guidlines = yield (0, confluence_1.getConfluencePageContent)(parseInt(contentId));
+    console.log({ guidlines });
     const messages = [
         {
             role: "system",

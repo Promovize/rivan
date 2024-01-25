@@ -160,15 +160,19 @@ const listenForPullRequestEvents = (signature, pullrequest) => __awaiter(void 0,
     var _e;
     try {
         const { id, author, title } = pullrequest || {};
+        console.log({ signature, pullrequest });
         yield addUserDefaultReviewer();
         const { nickname } = author || {};
         const pullRequestDiff = yield loadPullRequestDiff(id);
+        console.log({ pullRequestDiff });
         const authorInfo = yield getPullRequestAuthorInfo(author.uuid);
+        console.log({ authorInfo });
         const parsedDiff = (0, parse_git_diff_1.default)(pullRequestDiff, {
             noPrefix: false,
         });
         const { files } = parsedDiff;
         const formattedDiff = formatDiffForDisplay(files);
+        console.log({ formattedDiff });
         const review = yield (0, ai_1.getReviewFromOpenAI)({
             author_username: nickname,
             pull_request_title: title,
@@ -178,6 +182,7 @@ const listenForPullRequestEvents = (signature, pullrequest) => __awaiter(void 0,
         const { message } = choices[0] || {};
         const { tool_calls } = message || {};
         const firstCall = tool_calls === null || tool_calls === void 0 ? void 0 : tool_calls[0];
+        console.log({ firstCall });
         const { function: functionData } = firstCall || {};
         yield sendComments(id, functionData);
         const parsed = JSON.parse((functionData === null || functionData === void 0 ? void 0 : functionData.arguments) || "{}");

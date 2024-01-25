@@ -19,10 +19,15 @@ const express_1 = __importDefault(require("express"));
 const pull_requests_1 = require("./pull-requests");
 const body_parser_1 = __importDefault(require("body-parser"));
 const confluence_1 = require("./confluence");
+const moment_1 = __importDefault(require("moment"));
 const app = (0, express_1.default)();
 app.use(body_parser_1.default.json());
 app.use(body_parser_1.default.urlencoded({ extended: true }));
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)({
+    origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+}));
 const port = process.env.PORT || 5001;
 app.get("/", (_, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("Welcome to Smart Reviewer!");
@@ -32,16 +37,8 @@ app.post("/pull-request-handler", (req, res) => __awaiter(void 0, void 0, void 0
     const signature = req.headers["x-event-key"];
     const pullrequest = (_a = req.body) === null || _a === void 0 ? void 0 : _a.pullrequest;
     res.send("OK");
-    const now = new Date();
-    const formatedTime = now.toLocaleString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-    });
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const formatedTime = (0, moment_1.default)().format("MMMM Do YYYY, h:mm:ss a");
+    const timezone = (0, moment_1.default)().format("Z");
     console.dir({
         event: "Review started",
         signature,
