@@ -6,6 +6,7 @@ import { fakeAddComment, listenForPullRequestEvents } from "./pull-requests";
 import bodyParser from "body-parser";
 import { getConfluencePageContent } from "./confluence";
 import moment from "moment";
+import { getUsersInChannel, sendNotificationMessageAfterReview } from "./slack";
 const app = express();
 
 app.use(bodyParser.json());

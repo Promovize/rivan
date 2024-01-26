@@ -21,7 +21,6 @@ export const getConfluencePageContent = async (pageId: number): Promise<any> => 
 
     return pageHtmlContent;
   } catch (error) {
-    console.error("Error fetching Confluence page:", error);
     throw new Error("Error fetching page");
   }
 };

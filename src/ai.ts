@@ -10,10 +10,11 @@ type ReviewData = {
   review_diff: string;
   author_username: string;
   pull_request_title: string;
+  author_account_id: string;
 };
 
 const getReviewTools = (reviewData: ReviewData) => {
-  const { author_username } = reviewData;
+  const { author_username, author_account_id } = reviewData;
 
   const tools: ChatCompletionTool[] = [
     {
@@ -41,7 +42,8 @@ const getReviewTools = (reviewData: ReviewData) => {
                     to: 6, // This is specified in the formated diff.
                     path: "index.js", // This is specified in the formated diff
                 },
-                You can mention the author when necessary by adding @username in the comment. the username is ${author_username}
+                You can mention the author when necessary by adding @username in the comment. the username is ${author_username} and the account id is ${author_account_id}
+                to mention the user we use this format: @{${author_account_id}}
             `,
               items: {
                 type: "object",
@@ -144,6 +146,7 @@ export const getReviewFromOpenAI = async (reviewData: ReviewData) => {
         Before every first number, The is the file path.
 
         It's highly recommanded that you provide some code examples to illustrate your points when they might be complex. You can also include links to external resources that may be helpful.
+        Remember to add *[OPTIONAL]* or *[REQUIRED]* before your comments to indicate if the comment is optional or required. Only return \`REQUEST_CHANGES\` in final decision if there is at least one required comment.
         `,
     },
     {
@@ -168,4 +171,73 @@ export const getReviewFromOpenAI = async (reviewData: ReviewData) => {
   });
 
   return response;
+};
+
+export const findMostAccurateUser = async (nickname: string, users: any[]) => {
+  const tool: ChatCompletionTool[] = [
+    {
+      type: "function",
+      function: {
+        name: "find_most_accurate_user",
+        description: `
+          This function will find the most accurate user from a list of users.
+          It will return the id of the user.
+        `,
+        parameters: {
+          type: "object",
+          properties: {
+            userId: {
+              type: "string",
+              description: `
+                This is the id of the user that was the most close to the provided nickname.
+              `,
+            },
+          },
+          required: ["userId"],
+        },
+      },
+    },
+  ];
+
+  const messages: ChatCompletionMessageParam[] = [
+    {
+      role: "system",
+      content: `
+        Task Description:
+        - Your name is KayCode.
+        - Your assignment is to identify the most accurate match for a given nickname from a provided list of users.
+        - Here is the list of users: ${JSON.stringify(users, null, 2)}
+        - The nickname to match is: "${nickname}".
+        - Your task is to compare the nickname with each user's 'name' or 'real_name' in the list.
+        - Return the only 'id' of the user whose name or real_name is closest to the provided nickname like this: { userId: "U06FRLKGUN7" }.
+        Return null if no user was found with a close enough match.
+
+        examples:
+        - baraka can be matched with baraka, barack, 
+        - ben can be matched with 'Ben Mukebo', 'Mukebo Ben'
+      `,
+    },
+    {
+      role: "user",
+      content: `
+        Please process the provided user list and find the most accurate match for the nickname "${nickname}".
+      `,
+    },
+  ];
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4-1106-preview",
+    messages: messages,
+    tools: tool,
+    tool_choice: "auto",
+  });
+
+  const { choices } = response || {};
+  const { message } = choices[0] || {};
+  const { tool_calls } = message || {};
+  const firstCall = tool_calls?.[0];
+  const { function: functionData } = firstCall || {};
+  const parsed = JSON.parse(functionData?.arguments || "{}");
+  const { userId } = parsed || {};
+  return userId;
 };

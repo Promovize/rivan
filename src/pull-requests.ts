@@ -2,6 +2,7 @@ import axios from "axios";
 import { PullRequestEventData } from "./types/types";
 import { getReviewFromOpenAI } from "./ai";
 import parseGitDiff, { AnyFileChange, GitDiff } from "parse-git-diff";
+import { sendNotificationMessageAfterReview } from "./slack";
 const USER_NAME = process.env.BITBUCKET_USER;
 const PASSWORD = process.env.BITBUCKET_PASSWORD;
 
@@ -9,23 +10,6 @@ const repoSlug = "smart-reviewer-testing";
 const workspace = "promovize";
 
 const URL_PREFIX = process.env.BITBUCKET_API_URL || "https://api.bitbucket.org/2.0";
-
-// const getPullRequestStatuses = async (pullRequestId: number) => {
-//   const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/statuses`;
-//   const { data } = await axios.get(url, {
-//     auth: {
-//       username: USER_NAME!,
-//       password: PASSWORD!,
-//     },
-//     headers: {
-//       Accept: "application/json",
-//     },
-//   });
-
-//   const { values } = data;
-
-//   return values;
-// };
 
 const requestChanges = async (pullRequestId: number) => {
   const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/request-changes`;
@@ -186,6 +170,8 @@ export const listenForPullRequestEvents = async (signature: string, pullrequest:
     const { nickname } = author || {};
     const pullRequestDiff = await loadPullRequestDiff(id);
     const authorInfo = await getPullRequestAuthorInfo(author.uuid);
+    // @ts-ignore
+    console.log({ authorInfo: authorInfo.links, authorInfo });
     const parsedDiff = parseGitDiff(pullRequestDiff, {
       noPrefix: false,
     });
@@ -193,6 +179,7 @@ export const listenForPullRequestEvents = async (signature: string, pullrequest:
     const formattedDiff = formatDiffForDisplay(files);
     const review = await getReviewFromOpenAI({
       author_username: nickname,
+      author_account_id: author.account_id,
       pull_request_title: title,
       review_diff: formattedDiff,
     });
@@ -209,6 +196,20 @@ export const listenForPullRequestEvents = async (signature: string, pullrequest:
     if (parsed.finalDecision === "REQUEST_CHANGES") {
       await requestChanges(id);
     }
+    // @ts-ignore
+    const pullRequestUrl = pullrequest?.links?.html?.href;
+
+    await sendNotificationMessageAfterReview({
+      authorInfo,
+      finalDecision: parsed.finalDecision,
+      pullRequestLink: pullRequestUrl,
+    });
+
+    return {
+      signature,
+      pullrequest,
+      review,
+    };
   } catch (error: any) {
     console.log({ error: error.response?.data });
     throw error;
