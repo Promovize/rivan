@@ -40,17 +40,57 @@ export async function getUsersInChannel(channelId: string, nickname: string) {
 export const sendNotificationMessageAfterReview = async (message: SlackMessage) => {
   const { authorInfo, finalDecision, pullRequestLink } = message;
   const channel = channelId!;
-  const { users, mostAccurateUser } = await getUsersInChannel(channel, authorInfo.display_name);
-
-  const slackMessage = `
-          Hey there, ${
-            mostAccurateUser ? `<@${mostAccurateUser}>` : authorInfo.display_name
-          }! This is KayCode 🤖 a KYG Bot, your friendly neighborhood code reviewer. I've reviewed your <${pullRequestLink}|pull request> and left some comments for you. Please take a look and let me know if you have any questions. The status is currently ${finalDecision}😎. Thanks!
-          `;
+  const { mostAccurateUser } = await getUsersInChannel(channel, authorInfo.display_name);
+  const slackBlocks = [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `Hello ${
+          mostAccurateUser ? `<@${mostAccurateUser}>` : authorInfo.display_name
+        },\nThis is an automated message from KayCode :robot_face: regarding your recent Pull Request.`,
+      },
+    },
+    {
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "View Pull Request",
+          },
+          url: pullRequestLink,
+        },
+      ],
+    },
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `Current Status: *${
+          finalDecision === "REQUEST_CHANGES" ? "Changes Requested :recycle:" : finalDecision
+        }*`,
+      },
+    },
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `${
+          finalDecision === "REQUEST_CHANGES"
+            ? "Please note that changes have been requested."
+            : "Your pull request has been successfully processed. :white_check_mark:"
+        }\n\nKeep up the good work! :tada:`,
+      },
+    },
+  ];
 
   const res = await web.chat.postMessage({
     channel,
-    text: slackMessage,
+    blocks: slackBlocks,
+    text: "Pull Request Review Status",
   });
+
   return res;
 };

@@ -6,7 +6,6 @@ import { fakeAddComment, listenForPullRequestEvents } from "./pull-requests";
 import bodyParser from "body-parser";
 import { getConfluencePageContent } from "./confluence";
 import moment from "moment";
-import { getUsersInChannel, sendNotificationMessageAfterReview } from "./slack";
 const app = express();
 
 app.use(bodyParser.json());
@@ -49,11 +48,14 @@ app.post("/pull-request-handler", async (req, res) => {
 
   await listenForPullRequestEvents(signature, pullrequest);
 
+  const endTime = moment().format("MMMM Do YYYY, h:mm:ss a");
+  const endtimezone = moment().format("Z");
+
   console.dir(
     {
       event: "Review completed",
       signature,
-      time: `${formatedTime} Timezone: ${timezone}`,
+      time: `${endTime} Timezone: ${endtimezone}`,
       pullrequest: {
         id: pullrequest.id,
         title: pullrequest.title,

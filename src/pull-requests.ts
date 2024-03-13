@@ -163,15 +163,30 @@ const getDefaultReviewers = async () => {
   return data?.values;
 };
 
+const getPullRequestStatus = async (pullRequestId: number) => {
+  const url = `${URL_PREFIX}/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/statuses`;
+
+  const { data } = await axios.get(url, {
+    auth: {
+      username: USER_NAME!,
+      password: PASSWORD!,
+    },
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  return data?.values;
+};
+
 export const listenForPullRequestEvents = async (signature: string, pullrequest: PullRequestEventData) => {
   try {
-    const { id, author, title } = pullrequest || {};
+    const { id, author, title, description } = pullrequest || {};
     await addUserDefaultReviewer();
     const { nickname } = author || {};
     const pullRequestDiff = await loadPullRequestDiff(id);
     const authorInfo = await getPullRequestAuthorInfo(author.uuid);
     // @ts-ignore
-    console.log({ authorInfo: authorInfo.links, authorInfo });
     const parsedDiff = parseGitDiff(pullRequestDiff, {
       noPrefix: false,
     });
@@ -182,6 +197,7 @@ export const listenForPullRequestEvents = async (signature: string, pullrequest:
       author_account_id: author.account_id,
       pull_request_title: title,
       review_diff: formattedDiff,
+      pr_description: description,
     });
 
     const { choices } = review || {};

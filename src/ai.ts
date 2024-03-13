@@ -11,6 +11,7 @@ type ReviewData = {
   author_username: string;
   pull_request_title: string;
   author_account_id: string;
+  pr_description: string;
 };
 
 const getReviewTools = (reviewData: ReviewData) => {
@@ -42,8 +43,8 @@ const getReviewTools = (reviewData: ReviewData) => {
                     to: 6, // This is specified in the formated diff.
                     path: "index.js", // This is specified in the formated diff
                 },
-                You can mention the author when necessary by adding @username in the comment. the username is ${author_username} and the account id is ${author_account_id}
-                to mention the user we use this format: @{${author_account_id}}
+                You can mention the author when necessary in the comment. the username is ${author_username} and the account id is ${author_account_id}
+                to mention the user we use this format: @{${author_account_id}}: only use the account id for mentions.
             `,
               items: {
                 type: "object",
@@ -112,7 +113,7 @@ const getReviewTools = (reviewData: ReviewData) => {
 };
 
 export const getReviewFromOpenAI = async (reviewData: ReviewData) => {
-  const { review_diff, author_username, pull_request_title } = reviewData;
+  const { review_diff, author_username, pull_request_title, pr_description } = reviewData;
   const guidlines = await getConfluencePageContent(parseInt(contentId as string));
   const messages: ChatCompletionMessageParam[] = [
     {
@@ -145,14 +146,24 @@ export const getReviewFromOpenAI = async (reviewData: ReviewData) => {
         The number before the line indicates the exact line number of the code you want to comment on.
         Before every first number, The is the file path.
 
+       
+
         It's highly recommanded that you provide some code examples to illustrate your points when they might be complex. You can also include links to external resources that may be helpful.
         Remember to add *[OPTIONAL]* or *[REQUIRED]* before your comments to indicate if the comment is optional or required. Only return \`REQUEST_CHANGES\` in final decision if there is at least one required comment.
+
+        **Regarding the review summary:**
+        Ensure only one summary, not tied to any code line.
+        Summary must check:
+        PR title begins with Jira ticket number (e.g., "KU-2948 Fix text overflow...").
+        PR has a clear description of changes.
+        If these are not met, highlight only in the summary with bullet points.
         `,
     },
     {
       role: "user",
       content: `
-      Please conduct a review of the pull request titled '${pull_request_title}', authored by ${author_username}. The pull request includes the following diff for your examination:
+      Please conduct a review of the pull request titled '${pull_request_title}', authored by ${author_username}. The pull request description is: ${pr_description}.
+      The pull request includes the following diff for your examination:
       
       ${review_diff}
       
