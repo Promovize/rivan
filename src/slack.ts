@@ -41,6 +41,8 @@ export const sendNotificationMessageAfterReview = async (message: SlackMessage) 
   const { authorInfo, finalDecision, pullRequestLink } = message;
   const channel = channelId!;
   const { mostAccurateUser } = await getUsersInChannel(channel, authorInfo.display_name);
+
+  console.log({ mostAccurateUser });
   const slackBlocks = [
     {
       type: "section",
@@ -91,6 +93,7 @@ export const sendNotificationMessageAfterReview = async (message: SlackMessage) 
     blocks: slackBlocks,
     text: "Pull Request Review Status",
   });
+  console.log({ res });
 
   return res;
 };
